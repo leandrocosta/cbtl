@@ -20,7 +20,7 @@
  */
 
 /*!
- * \file tests/cbt/btree.h
+ * \file tests/cbt/btree_test.h
  * \brief Tests for btree class.
  * \author Leandro Costa
  * \date 2011
@@ -29,8 +29,54 @@
 #include "gtest/gtest.h"
 #include "cbt/btree.h"
 
-TEST(BTree, Basic) {
-    EXPECT_EQ(0, 1);
+class EmptyBTree : public testing::Test {
+    protected:
+        virtual void SetUp() {
+            p_btree_ = new cbt::btree<int, std::string>();
+        }
+
+        cbt::btree<int, std::string>* p_btree_;
+};
+
+class OneItemBTree : public testing::Test {
+    protected:
+        virtual void SetUp() {
+            p_btree_ = new cbt::btree<int, std::string>();
+            p_btree_->insert(1, "A");
+        }
+
+        cbt::btree<int, std::string>* p_btree_;
+};
+
+TEST_F(EmptyBTree, ShouldBeEmptyWhenJustCreated) {
+    EXPECT_TRUE(p_btree_->empty());
+}
+
+TEST_F(EmptyBTree, ShouldHaveBeginEqualToEnd) {
+    EXPECT_EQ(p_btree_->end(), p_btree_->begin());
+}
+
+TEST_F(EmptyBTree, ShouldReturnEndWhenSearchedByAnyKey) {
+    EXPECT_EQ(p_btree_->end(), p_btree_->find(1));
+}
+
+TEST_F(OneItemBTree, ShouldNotBeEmptyWhenItemInserted) {
+    EXPECT_FALSE(p_btree_->empty());
+}
+
+TEST_F(OneItemBTree, ShouldHaveBeginNotEqualToEnd) {
+    EXPECT_NE(p_btree_->end(), p_btree_->begin());
+}
+
+TEST_F(OneItemBTree, ShouldHaveBeginPointingToItem) {
+    cbt::btree<int, std::string>::iterator it = p_btree_->begin();
+    EXPECT_EQ(1, it->first);
+    EXPECT_EQ("A", it->second);
+}
+
+TEST_F(OneItemBTree, ShouldHaveBeginPointingToEndAfterInc) {
+    cbt::btree<int, std::string>::iterator it = p_btree_->begin();
+    EXPECT_EQ(p_btree_->end(), ++it);
 }
 
 int main(int argc, char* argv[]) {

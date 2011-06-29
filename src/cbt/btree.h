@@ -30,26 +30,74 @@
 #define CBTL_CBT_BTREE_H_
 
 #include "cbt/btree_node.h"
+#include "cbt/btree_iterator.h"
 
 namespace cbt {
-    template<typename _TpKey, typename _TpValue, unsigned char order = 1>
+
+    /*! 
+     * \class btree
+     * \brief The btree class template.
+     * \author Leandro Costa
+     * \date 2011
+     *
+     * A btree with keys of type \b _TpKey, and values of type \b _TpValue.
+     */
+
+    template<typename _TpKey, typename _TpValue, uint8_t _order = 1>
         class btree {
+            private:
+                typedef btree_node<_TpKey, _TpValue, _order> node;
+
             public:
+                typedef btree_iterator<_TpKey, _TpValue, _order> iterator;
+
+            public:
+                iterator begin();
+                iterator end() { return iterator(); }
+                iterator find(const _TpKey& key);
+
                 void insert(const _TpKey& key, const _TpValue& value);
-                const _TpValue& find(const _TpKey& key) const;
+                const bool empty() const { return root_.empty(); }
 
             private:
-                btree_node<_TpKey, _TpValue, order> root_;
+                node root_;
         };
 
-    template<typename _TpKey, typename _TpValue, unsigned char order>
-        void btree<_TpKey, _TpValue, order>::insert(const _TpKey& key, const _TpValue& value) {
-            root_.insert(key, value);
+    template<typename _TpKey, typename _TpValue, uint8_t _order>
+        void btree<_TpKey, _TpValue, _order>::insert(const _TpKey& key, const _TpValue& value) {
+            if (root_.is_leaf()) {
+                if (root_.num_items_ < node::max_num_items) {
+                    root_.insert(key, value);
+                } else {
+                }
+            } else {
+            }
         }
 
-    template<typename _TpKey, typename _TpValue, unsigned char order>
-        const _TpValue& btree<_TpKey, _TpValue, order>::find(const _TpKey& key) const {
-            return root_.find(key);
+    template<typename _TpKey, typename _TpValue, uint8_t _order>
+        typename btree<_TpKey, _TpValue, _order>::iterator btree<_TpKey, _TpValue, _order>::begin() {
+            if (!root_.empty()) {
+                node& n = root_;
+                uint8_t idx = 0;
+                return iterator(&n, idx);
+            } else {
+                return iterator();
+            }
+        }
+
+    template<typename _TpKey, typename _TpValue, uint8_t _order>
+        typename btree<_TpKey, _TpValue, _order>::iterator btree<_TpKey, _TpValue, _order>::find(const _TpKey& key) {
+            btree_node<_TpKey, _TpValue, _order>& node = root_;
+
+            uint8_t idx = 0;
+
+            while (idx < node.num_items_ && node.items_[idx].first < key)
+                idx++;
+
+            if (idx < node.num_items_ && node.items_[idx].first == key)
+                return iterator(&node, idx);
+            else
+                return iterator();
         }
 }
 

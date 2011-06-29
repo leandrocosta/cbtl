@@ -33,69 +33,51 @@
 #include <cstring>
 
 namespace cbt {
-    template<typename _TpKey, typename _TpValue, uint8_t order>
+    template<typename _TpKey, typename _TpValue, uint8_t _order>
+        class btree;
+
+    template<typename _TpKey, typename _TpValue, uint8_t _order>
+        class btree_iterator;
+
+    template<typename _TpKey, typename _TpValue, uint8_t _order>
         class btree_node {
+            private:
+                friend class btree<_TpKey, _TpValue, _order>;
+                friend class btree_iterator<_TpKey, _TpValue, _order>;
+
+                const static uint8_t max_num_items = 2*_order;
+                const static uint8_t max_num_nodes = max_num_items+1;
+
             public:
-                btree_node() : num_keys_(0) { }
+                btree_node() : parent_(NULL), num_items_(0) {
+                    memset(&nodes_, NULL, sizeof(btree_node<_TpKey, _TpValue, _order>*));
+                }
 
             private:
-                const bool is_leaf();
-                void insert_here(const _TpKey& key, const _TpValue& value);
+                const bool is_leaf() const { return (nodes_[0] == NULL); }
+                const bool empty() const { return (num_items_ == 0); }
 
-            public:
                 void insert(const _TpKey& key, const _TpValue& value);
-                const _TpValue& find(const _TpKey& key) const;
 
             private:
-                btree_node<_TpKey, _TpValue, order>* parent_;
-                btree_node<_TpKey, _TpValue, order>* nodes_[2*order+1];
+                btree_node<_TpKey, _TpValue, _order>* parent_;
+                btree_node<_TpKey, _TpValue, _order>* nodes_[max_num_nodes];
 
-                _TpKey keys_[2*order];
-                _TpValue values_[2*order+1];
+                std::pair<_TpKey, _TpValue> items_[max_num_items];
 
-                uint8_t num_keys_;
+                uint8_t num_items_;
         };
 
-    template<typename _TpKey, typename _TpValue, uint8_t order>
-        const bool btree_node<_TpKey, _TpValue, order>::is_leaf() {
-            return (num_keys_ == 0);
-        }
+    template<typename _TpKey, typename _TpValue, uint8_t _order>
+        void btree_node<_TpKey, _TpValue, _order>::insert(const _TpKey& key, const _TpValue& value) {
+            uint8_t i = num_items_;
 
-    template<typename _TpKey, typename _TpValue, uint8_t order>
-        void btree_node<_TpKey, _TpValue, order>::insert_here(const _TpKey& key, const _TpValue& value) {
-            uint8_t i = num_keys_;
-
-            while (i > 0 && keys_[i-1] > key) {
-                keys_[i] = keys_[i-1];
-                values_[i] = values_[i-1];
+            while (i > 0 && items_[i-1].first > key) {
+                items_[i] = items_[i-1];
             }
 
-            keys_[i] = key;
-            values_[i] = value;
-            num_keys_++;
-        }
-
-    template<typename _TpKey, typename _TpValue, uint8_t order>
-        void btree_node<_TpKey, _TpValue, order>::insert(const _TpKey& key, const _TpValue& value) {
-            if (is_leaf()) {
-                if (num_keys_ < 2*order) {
-                    insert_here(key, value);
-                } else {
-                }
-            } else {
-            }
-        }
-
-    template<typename _TpKey, typename _TpValue, unsigned char order>
-        const _TpValue& btree_node<_TpKey, _TpValue, order>::find(const _TpKey& key) const {
-            uint8_t i = 0;
-
-            while (i < num_keys_ && keys_[i] < key)
-                i++;
-            if (i < num_keys_ && key == keys_[i])
-                return values_[i];
-            else
-                throw("error");
+            items_[i] = std::make_pair(key, value);
+            num_items_++;
         }
 }
 
