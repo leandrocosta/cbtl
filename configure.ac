@@ -29,6 +29,10 @@ AC_C_RESTRICT
 AC_TYPE_SIZE_T
 AC_CHECK_TYPES([ptrdiff_t])
 
+DIR_GLOG=/usr/local/glog-0.3.1
+DIR_GLOG_LIB_DEFAULT=$DIR_GLOG/lib
+DIR_GLOG_INC_DEFAULT=$DIR_GLOG/include
+
 CPPFLAGS='-g -Wall -Werror -O'
 CFLAGS=
 CXXFLAGS=
@@ -36,8 +40,28 @@ CXXFLAGS=
 LDFLAGS='-lpthread'
 INCLUDES='-I$(top_srcdir)/src -I$(top_srcdir)/src/tests/gtest/include'
 
+dnl **************************************************************************
+dnl Check for presence of Google C++ Logging Library (glog)
+dnl **************************************************************************
+
+AC_ARG_WITH(glog-includes,
+			AC_HELP_STRING([--with-glog-includes=DIR],
+						   [Specify location of Google C++ Logging Library headers]),
+						   [INCLUDES="$INCLUDES -I$withval"],
+						   [INCLUDES="$INCLUDES -I${DIR_GLOG_INC_DEFAULT}"])
+
+AC_ARG_WITH(glog-libs,
+			AC_HELP_STRING([--with-glog-libs=DIR],
+						   [Specify location of Google C++ Logging Library libs]),
+						   [LIB_GLOG_PATH="$withval"],
+						   [LIB_GLOG_PATH="${DIR_GLOG_LIB_DEFAULT}"])
+
+LIBS="$LIBS -L${LIB_GLOG_PATH} -lglog"
+
+AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
 AC_SUBST(INCLUDES)
+AC_SUBST(CXXTFLAGS)
 
 # Checks for library functions.
 AC_FUNC_FORK

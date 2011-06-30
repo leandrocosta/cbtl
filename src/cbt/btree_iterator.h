@@ -29,6 +29,11 @@
 #ifndef CBTL_CBT_BTREE_ITERATOR_H_
 #define CBTL_CBT_BTREE_ITERATOR_H_
 
+#include <utility>
+#include <stack>
+
+#include <glog/logging.h>
+
 namespace cbt {
     template<typename _TpKey, typename _TpValue, uint8_t _order>
         class btree_node;
@@ -49,16 +54,36 @@ namespace cbt {
 
             public:
                 btree_iterator() : ptr_(NULL), idx_(0) { }
-                btree_iterator(btree_node<_TpKey, _TpValue, _order>* ptr, uint8_t idx) : ptr_(ptr), idx_(idx) { }
+                btree_iterator(node* ptr, uint8_t idx, std::stack<uint8_t>
+                        idx_stack) : ptr_(ptr), idx_(idx), idx_stack_(idx_stack) { }
 
             private:
                 void _incr() {
-                    if (idx_ < node::max_num_nodes && ptr_->nodes_[idx_+1]) {
-                        throw "not implemented";
+                    if (idx_+1 < node::max_num_nodes && ptr_->nodes_[idx_+1]) {
+                        idx_stack_.push(idx_+1);
+                        ptr_ = ptr_->nodes_[idx_+1];
+
+                        while (ptr_->nodes_[0]) {
+                            idx_stack_.push(0);
+                            ptr_ = ptr_->nodes_[0];
+                        }
                     } else if (idx_+1 < ptr_->num_items_) {
                         idx_++;
                     } else if (ptr_->parent_) {
-                        throw "not implemented";
+                        ptr_ = ptr_->parent_;
+                        idx_ = idx_stack_.top();
+                        idx_stack_.pop();
+
+                        while (ptr_ && idx_ >= ptr_->num_items_) {
+                            ptr_ = ptr_->parent_;
+
+                            if (ptr_) {
+                                idx_ = idx_stack_.top();
+                                idx_stack_.pop();
+                            } else {
+                                idx_ = 0;
+                            }
+                        }
                     } else {
                         ptr_ = NULL;
                         idx_ = 0;
@@ -69,6 +94,7 @@ namespace cbt {
                 const bool operator==(const btree_iterator& other) const {
                     return (ptr_ == other.ptr_ && idx_ == other.idx_);
                 }
+
                 const bool operator!=(const btree_iterator& other) const {
                     return !operator==(other);
                 }
@@ -86,7 +112,7 @@ namespace cbt {
                     return *this;
                 }
 
-                const btree_iterator operator++(int) {
+                const btree_iterator operator++(int i) {
                     btree_iterator it = *this;
                     _incr();
                     return it;
@@ -95,6 +121,7 @@ namespace cbt {
             private:
                 btree_node<_TpKey, _TpValue, _order>* ptr_;
                 uint8_t idx_;
+                std::stack<uint8_t> idx_stack_;
         };
 }
 

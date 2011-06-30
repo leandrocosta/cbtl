@@ -50,12 +50,13 @@ namespace cbt {
 
             public:
                 btree_node() : parent_(NULL), num_items_(0) {
-                    memset(&nodes_, NULL, sizeof(btree_node<_TpKey, _TpValue, _order>*));
+                    memset(&nodes_, 0, max_num_nodes * sizeof(btree_node<_TpKey, _TpValue, _order>*));
                 }
 
             private:
                 const bool is_leaf() const { return (nodes_[0] == NULL); }
                 const bool empty() const { return (num_items_ == 0); }
+                void set_parent(btree_node* p_node) { parent_ = p_node; }
 
                 void insert(const _TpKey& key, const _TpValue& value);
 

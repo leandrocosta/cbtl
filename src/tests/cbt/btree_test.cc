@@ -26,23 +26,14 @@
  * \date 2011
  */
 
+#include <glog/logging.h>
 #include "gtest/gtest.h"
 #include "cbt/btree.h"
 
-class EmptyBTree : public testing::Test {
+class EmptyBTree : public ::testing::Test {
     protected:
         virtual void SetUp() {
             p_btree_ = new cbt::btree<int, std::string>();
-        }
-
-        cbt::btree<int, std::string>* p_btree_;
-};
-
-class OneItemBTree : public testing::Test {
-    protected:
-        virtual void SetUp() {
-            p_btree_ = new cbt::btree<int, std::string>();
-            p_btree_->insert(1, "A");
         }
 
         cbt::btree<int, std::string>* p_btree_;
@@ -59,6 +50,17 @@ TEST_F(EmptyBTree, ShouldHaveBeginEqualToEnd) {
 TEST_F(EmptyBTree, ShouldReturnEndWhenSearchedByAnyKey) {
     EXPECT_EQ(p_btree_->end(), p_btree_->find(1));
 }
+
+
+class OneItemBTree : public ::testing::Test {
+    protected:
+        virtual void SetUp() {
+            p_btree_ = new cbt::btree<int, std::string>();
+            p_btree_->insert(1, "A");
+        }
+
+        cbt::btree<int, std::string>* p_btree_;
+};
 
 TEST_F(OneItemBTree, ShouldNotBeEmptyWhenItemInserted) {
     EXPECT_FALSE(p_btree_->empty());
@@ -79,7 +81,112 @@ TEST_F(OneItemBTree, ShouldHaveBeginPointingToEndAfterInc) {
     EXPECT_EQ(p_btree_->end(), ++it);
 }
 
+
+class TwoItemsBTree : public ::testing::Test {
+    protected:
+        virtual void SetUp() {
+            p_btree_ = new cbt::btree<int, std::string>();
+            p_btree_->insert(1, "B");
+            p_btree_->insert(2, "A");
+        }
+
+        cbt::btree<int, std::string>* p_btree_;
+};
+
+TEST_F(TwoItemsBTree, ShouldPermitIterateByItems) {
+    cbt::btree<int, std::string>::iterator it = p_btree_->begin();
+    EXPECT_EQ(1, it->first);
+    EXPECT_EQ("B", it->second);
+
+    it++;
+    EXPECT_EQ(2, it->first);
+    EXPECT_EQ("A", it->second);
+
+    ++it;
+    EXPECT_EQ(p_btree_->end(), it);
+}
+
+
+class ThreeItemsBTree : public ::testing::Test {
+    protected:
+        virtual void SetUp() {
+            p_btree_ = new cbt::btree<int, std::string>();
+            p_btree_->insert(1, "B");
+            p_btree_->insert(2, "A");
+            p_btree_->insert(3, "C");
+        }
+
+        cbt::btree<int, std::string>* p_btree_;
+};
+
+TEST_F(ThreeItemsBTree, ShouldReturnLowerKeyAsFirstItem) {
+    EXPECT_EQ(1, p_btree_->begin()->first);
+}
+
+TEST_F(ThreeItemsBTree, ShouldReturnSecondKeyAsSecondItem) {
+    cbt::btree<int, std::string>::iterator it = p_btree_->begin();
+    EXPECT_EQ(2, (++it)->first);
+}
+
+TEST_F(ThreeItemsBTree, ShouldReturnThirdKeyAsThirdItem) {
+    cbt::btree<int, std::string>::iterator it = p_btree_->begin();
+    ++it;
+    EXPECT_EQ(3, (++it)->first);
+}
+
+TEST_F(ThreeItemsBTree, ShouldPermitIterateByItems) {
+    cbt::btree<int, std::string>::iterator it = p_btree_->begin();
+    EXPECT_EQ(1, it->first);
+    EXPECT_EQ("B", it->second);
+
+    it++;
+    EXPECT_EQ(2, it->first);
+    EXPECT_EQ("A", it->second);
+
+    it++;
+    EXPECT_EQ(3, it->first);
+    EXPECT_EQ("C", it->second);
+
+    ++it;
+    EXPECT_EQ(p_btree_->end(), it);
+}
+
+
+class SevenItemsBTree : public ::testing::Test {
+    protected:
+        virtual void SetUp() {
+            p_btree_ = new cbt::btree<int, std::string>();
+            p_btree_->insert(4, "A");
+            p_btree_->insert(6, "D");
+            p_btree_->insert(3, "C");
+            p_btree_->insert(5, "E");
+            p_btree_->insert(7, "B");
+            p_btree_->insert(2, "F");
+            p_btree_->insert(1, "G");
+        }
+
+        cbt::btree<int, std::string>* p_btree_;
+};
+
+TEST_F(SevenItemsBTree, ShouldPermitIterateByItems) {
+    cbt::btree<int, std::string>::iterator it = p_btree_->begin();
+    EXPECT_EQ(1, it->first);
+    EXPECT_EQ("G", it->second);
+
+    /*
+    it++;
+    EXPECT_EQ(2, it->first);
+    EXPECT_EQ("F", it->second);
+
+    it++;
+    EXPECT_EQ(3, it->first);
+    EXPECT_EQ("C", it->second);
+    */
+}
+
+
 int main(int argc, char* argv[]) {
+    ::google::InitGoogleLogging(argv[0]);
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
