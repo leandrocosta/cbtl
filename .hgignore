@@ -1,0 +1,21 @@
+syntax: glob
+
+aclocal.m4
+autom4te.cache
+.deps
+*.o
+*~
+*.swp
+Makefile
+Makefile.in
+config.log
+config.status
+depcomp
+install-sh
+ltmain.sh
+missing
+stamp-h1
+configure
+config.h
+src/examples/example1
+src/tests/cbt/btree_test
