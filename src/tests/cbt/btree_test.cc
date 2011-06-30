@@ -173,7 +173,6 @@ TEST_F(SevenItemsBTree, ShouldPermitIterateByItems) {
     EXPECT_EQ(1, it->first);
     EXPECT_EQ("G", it->second);
 
-    /*
     it++;
     EXPECT_EQ(2, it->first);
     EXPECT_EQ("F", it->second);
@@ -181,7 +180,25 @@ TEST_F(SevenItemsBTree, ShouldPermitIterateByItems) {
     it++;
     EXPECT_EQ(3, it->first);
     EXPECT_EQ("C", it->second);
-    */
+
+    it++;
+    EXPECT_EQ(4, it->first);
+    EXPECT_EQ("A", it->second);
+
+    it++;
+    EXPECT_EQ(5, it->first);
+    EXPECT_EQ("E", it->second);
+
+    it++;
+    EXPECT_EQ(6, it->first);
+    EXPECT_EQ("D", it->second);
+
+    it++;
+    EXPECT_EQ(7, it->first);
+    EXPECT_EQ("B", it->second);
+
+    it++;
+    EXPECT_EQ(p_btree_->end(), it);
 }
 
 

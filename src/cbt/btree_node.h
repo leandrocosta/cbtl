@@ -32,6 +32,8 @@
 #include <stdint.h>
 #include <cstring>
 
+#include <glog/logging.h>
+
 namespace cbt {
     template<typename _TpKey, typename _TpValue, uint8_t _order>
         class btree;
@@ -50,7 +52,7 @@ namespace cbt {
 
             public:
                 btree_node() : parent_(NULL), num_items_(0) {
-                    memset(&nodes_, 0, max_num_nodes * sizeof(btree_node<_TpKey, _TpValue, _order>*));
+                    memset(&nodes_, 0, max_num_nodes * sizeof(btree_node*));
                 }
 
             private:
@@ -58,11 +60,13 @@ namespace cbt {
                 const bool empty() const { return (num_items_ == 0); }
                 void set_parent(btree_node* p_node) { parent_ = p_node; }
 
-                void insert(const _TpKey& key, const _TpValue& value);
+                void insert(const _TpKey& key, const _TpValue& value, btree_node* p_right_node = NULL);
+                void insert(const std::pair<_TpKey, _TpValue>& item);
+                void insert(const std::pair<_TpKey, _TpValue>& item, btree_node* p_right_node);
 
             private:
-                btree_node<_TpKey, _TpValue, _order>* parent_;
-                btree_node<_TpKey, _TpValue, _order>* nodes_[max_num_nodes];
+                btree_node* parent_;
+                btree_node* nodes_[max_num_nodes];
 
                 std::pair<_TpKey, _TpValue> items_[max_num_items];
 
@@ -70,15 +74,29 @@ namespace cbt {
         };
 
     template<typename _TpKey, typename _TpValue, uint8_t _order>
-        void btree_node<_TpKey, _TpValue, _order>::insert(const _TpKey& key, const _TpValue& value) {
+        void btree_node<_TpKey, _TpValue, _order>::insert(const _TpKey& key, const _TpValue& value, btree_node* p_right_node) {
+            DLOG(INFO) << "btree_node with " << int(num_items_) << " items inserting item (" << key << ", " << value << ")";
             uint8_t i = num_items_;
 
             while (i > 0 && items_[i-1].first > key) {
                 items_[i] = items_[i-1];
+                nodes_[i+1] = nodes_[i];
+                i--;
             }
 
             items_[i] = std::make_pair(key, value);
+            nodes_[i+1] = p_right_node;
             num_items_++;
+        }
+
+    template<typename _TpKey, typename _TpValue, uint8_t _order>
+        void btree_node<_TpKey, _TpValue, _order>::insert(const std::pair<_TpKey, _TpValue>& item) {
+            insert(item.first, item.second);
+        }
+
+    template<typename _TpKey, typename _TpValue, uint8_t _order>
+        void btree_node<_TpKey, _TpValue, _order>::insert(const std::pair<_TpKey, _TpValue>& item, btree_node* p_right_node) {
+            insert(item.first, item.second, p_right_node);
         }
 }
 

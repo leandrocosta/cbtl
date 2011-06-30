@@ -59,12 +59,15 @@ namespace cbt {
 
             private:
                 void _incr() {
+                    DLOG(INFO) << "old key (idx_: " << int(idx_) << "): " << ptr_->items_[idx_].first;
                     if (idx_+1 < node::max_num_nodes && ptr_->nodes_[idx_+1]) {
+                        DLOG(INFO) << "node found";
                         idx_stack_.push(idx_+1);
                         ptr_ = ptr_->nodes_[idx_+1];
+                        idx_ = 0;
 
                         while (ptr_->nodes_[0]) {
-                            idx_stack_.push(0);
+                            idx_stack_.push(idx_);
                             ptr_ = ptr_->nodes_[0];
                         }
                     } else if (idx_+1 < ptr_->num_items_) {
