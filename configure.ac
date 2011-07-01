@@ -38,7 +38,7 @@ CFLAGS=
 CXXFLAGS=
 
 LDFLAGS='-lpthread'
-INCLUDES='-I$(top_srcdir)/src -I$(top_srcdir)/src/tests/gtest/include'
+INCLUDES='-I$(top_srcdir)/src -I$(top_srcdir)/lib/gtest/include'
 
 dnl **************************************************************************
 dnl Check for presence of Google C++ Logging Library (glog)

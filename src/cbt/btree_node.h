@@ -42,74 +42,70 @@ namespace cbt {
         class btree_iterator;
 
     template<typename _TpKey, typename _TpValue, uint8_t _order>
-        class btree_node {
-            private:
-                friend class btree<_TpKey, _TpValue, _order>;
-                friend class btree_iterator<_TpKey, _TpValue, _order>;
-
-                const static uint8_t max_num_items = 2*_order;
-                const static uint8_t max_num_nodes = max_num_items+1;
-
-            private:
-                typedef std::pair<_TpKey, _TpValue> _TpItem;
-                typedef std::pair<_TpItem, btree_node*> _TpItemRNode;
+        class _BTreeNode {
+            public:
+                const static uint8_t MAX_NUM_ITEMS = 2*_order;
+                const static uint8_t MAX_NUM_NODES = MAX_NUM_ITEMS+1;
 
             public:
-                btree_node() : parent_(NULL), num_items_(0) {
-                    memset(&nodes_, 0, max_num_nodes * sizeof(btree_node*));
+                typedef std::pair<_TpKey, _TpValue> _TpItem;
+
+            public:
+                _BTreeNode() : parent_(NULL), num_items_(0) {
+                    memset(&nodes_, 0, MAX_NUM_NODES * sizeof(_BTreeNode*));
                 }
 
-            private:
+            public:
+                _BTreeNode* parent() const { return parent_; }
+
+                _BTreeNode* node(const uint8_t& idx) const { return nodes_[idx]; }
+                void set_node(const uint8_t& idx, _BTreeNode* _ptr_node) { nodes_[idx] = _ptr_node; }
+
+                _TpItem& item(const uint8_t& idx) { return items_[idx]; }
+                inline const uint8_t num_items() const { return num_items_; }
+
+                void set_parent(_BTreeNode* p_node) { parent_ = p_node; }
                 const bool is_leaf() const { return (nodes_[0] == NULL); }
-                const bool empty() const { return (num_items_ == 0); }
-                void set_parent(btree_node* p_node) { parent_ = p_node; }
 
-                void insert(const _TpKey& key, const _TpValue& value, btree_node* p_right_node = NULL);
-                void insert(const _TpItem& item);
-                void insert(const _TpItem& item, btree_node* p_right_node);
-                void get_median_item_rnode(_TpItem& item, btree_node*& p_node);
+                void insert(const _TpItem& item, _BTreeNode* p_node_right = NULL);
+                _BTreeNode* split(_BTreeNode* p_node_left);
+                void get_median_item_rnode(_TpItem& item, _BTreeNode*& p_node);
+
+                const bool empty() const { return (num_items_ == 0); }
 
             private:
-                btree_node* parent_;
-                btree_node* nodes_[max_num_nodes];
+                _BTreeNode* parent_;
+                _BTreeNode* nodes_[MAX_NUM_NODES];
 
-                _TpItem items_[max_num_items];
+                _TpItem items_[MAX_NUM_ITEMS];
 
                 uint8_t num_items_;
         };
 
     template<typename _TpKey, typename _TpValue, uint8_t _order>
-        void btree_node<_TpKey, _TpValue, _order>::insert(const _TpKey& key, const _TpValue& value, btree_node* p_right_node) {
-            DLOG(INFO) << "btree_node with " << int(num_items_) << " items inserting item (" << key << ", " << value << ")";
+        void _BTreeNode<_TpKey, _TpValue, _order>::insert(const _TpItem& item, _BTreeNode* p_node_right) {
+            if (num_items_ == MAX_NUM_ITEMS)
+                throw std::exception();
+
             uint8_t i = num_items_;
 
-            while (i > 0 && items_[i-1].first > key) {
+            while (i > 0 && items_[i-1].first > item.first) {
                 items_[i] = items_[i-1];
                 nodes_[i+1] = nodes_[i];
                 i--;
             }
 
-            items_[i] = std::make_pair(key, value);
-            nodes_[i+1] = p_right_node;
+            items_[i] = item;
+            nodes_[i+1] = p_node_right;
             num_items_++;
         }
 
     template<typename _TpKey, typename _TpValue, uint8_t _order>
-        void btree_node<_TpKey, _TpValue, _order>::insert(const _TpItem& item) {
-            insert(item.first, item.second);
-        }
-
-    template<typename _TpKey, typename _TpValue, uint8_t _order>
-        void btree_node<_TpKey, _TpValue, _order>::insert(const _TpItem& item, btree_node* p_right_node) {
-            insert(item.first, item.second, p_right_node);
-        }
-
-    template<typename _TpKey, typename _TpValue, uint8_t _order>
-        void btree_node<_TpKey, _TpValue, _order>::get_median_item_rnode(_TpItem& item, btree_node*& p_node) {
+        void _BTreeNode<_TpKey, _TpValue, _order>::get_median_item_rnode(_TpItem& item, _BTreeNode*& p_node) {
             for (uint8_t idx = 0; idx < _order; idx++) {
                 if (item.first < items_[idx].first) {
                     _TpItem tmp = item;
-                    btree_node* p_node_tmp = p_node;
+                    _BTreeNode* p_node_tmp = p_node;
 
                     item = items_[idx];
                     p_node = nodes_[idx+1];
@@ -119,10 +115,10 @@ namespace cbt {
                 }
             }
 
-            for (uint8_t idx = max_num_items-1; idx >= _order; idx--) {
+            for (uint8_t idx = MAX_NUM_ITEMS-1; idx >= _order; idx--) {
                 if (item.first > items_[idx].first) {
                     _TpItem tmp = item;
-                    btree_node* p_node_tmp = p_node;
+                    _BTreeNode* p_node_tmp = p_node;
 
                     item = items_[idx];
                     p_node = nodes_[idx+1];
@@ -131,6 +127,24 @@ namespace cbt {
                     nodes_[idx+1] = p_node_tmp;
                 }
             }
+        }
+
+    template<typename _TpKey, typename _TpValue, uint8_t _order>
+        _BTreeNode<_TpKey, _TpValue, _order>* _BTreeNode<_TpKey, _TpValue, _order>::split(_BTreeNode* p_node_left) {
+            _BTreeNode* p_new_node_right = new _BTreeNode();
+
+            for (uint8_t idx = _order; idx < num_items_; idx++) {
+                p_new_node_right->insert(items_[idx], nodes_[idx+1]);
+                nodes_[idx+1] = NULL;
+            }
+
+            if (p_node_left)
+                p_node_left->parent_ = p_new_node_right;
+
+            p_new_node_right->nodes_[0] = p_node_left;
+            num_items_ = _order;
+
+            return p_new_node_right;
         }
 }
 
