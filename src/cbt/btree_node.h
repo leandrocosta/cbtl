@@ -50,6 +50,10 @@ namespace cbt {
                 const static uint8_t max_num_items = 2*_order;
                 const static uint8_t max_num_nodes = max_num_items+1;
 
+            private:
+                typedef std::pair<_TpKey, _TpValue> _TpItem;
+                typedef std::pair<_TpItem, btree_node*> _TpItemRNode;
+
             public:
                 btree_node() : parent_(NULL), num_items_(0) {
                     memset(&nodes_, 0, max_num_nodes * sizeof(btree_node*));
@@ -61,14 +65,15 @@ namespace cbt {
                 void set_parent(btree_node* p_node) { parent_ = p_node; }
 
                 void insert(const _TpKey& key, const _TpValue& value, btree_node* p_right_node = NULL);
-                void insert(const std::pair<_TpKey, _TpValue>& item);
-                void insert(const std::pair<_TpKey, _TpValue>& item, btree_node* p_right_node);
+                void insert(const _TpItem& item);
+                void insert(const _TpItem& item, btree_node* p_right_node);
+                void get_median_item_rnode(_TpItem& item, btree_node*& p_node);
 
             private:
                 btree_node* parent_;
                 btree_node* nodes_[max_num_nodes];
 
-                std::pair<_TpKey, _TpValue> items_[max_num_items];
+                _TpItem items_[max_num_items];
 
                 uint8_t num_items_;
         };
@@ -90,13 +95,42 @@ namespace cbt {
         }
 
     template<typename _TpKey, typename _TpValue, uint8_t _order>
-        void btree_node<_TpKey, _TpValue, _order>::insert(const std::pair<_TpKey, _TpValue>& item) {
+        void btree_node<_TpKey, _TpValue, _order>::insert(const _TpItem& item) {
             insert(item.first, item.second);
         }
 
     template<typename _TpKey, typename _TpValue, uint8_t _order>
-        void btree_node<_TpKey, _TpValue, _order>::insert(const std::pair<_TpKey, _TpValue>& item, btree_node* p_right_node) {
+        void btree_node<_TpKey, _TpValue, _order>::insert(const _TpItem& item, btree_node* p_right_node) {
             insert(item.first, item.second, p_right_node);
+        }
+
+    template<typename _TpKey, typename _TpValue, uint8_t _order>
+        void btree_node<_TpKey, _TpValue, _order>::get_median_item_rnode(_TpItem& item, btree_node*& p_node) {
+            for (uint8_t idx = 0; idx < _order; idx++) {
+                if (item.first < items_[idx].first) {
+                    _TpItem tmp = item;
+                    btree_node* p_node_tmp = p_node;
+
+                    item = items_[idx];
+                    p_node = nodes_[idx+1];
+
+                    items_[idx] = tmp;
+                    nodes_[idx+1] = p_node_tmp;
+                }
+            }
+
+            for (uint8_t idx = max_num_items-1; idx >= _order; idx--) {
+                if (item.first > items_[idx].first) {
+                    _TpItem tmp = item;
+                    btree_node* p_node_tmp = p_node;
+
+                    item = items_[idx];
+                    p_node = nodes_[idx+1];
+
+                    items_[idx] = tmp;
+                    nodes_[idx+1] = p_node_tmp;
+                }
+            }
         }
 }
 

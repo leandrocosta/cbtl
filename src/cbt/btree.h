@@ -57,78 +57,8 @@ namespace cbt {
                 btree() : root_(new node()) { }
 
             private:
-                node* get_node_to_insert(const _TpKey& key) const {
-                    node* p_node = root_;
-
-                    while (! p_node->is_leaf()) {
-                        DLOG(INFO) << "node is not leaf";
-                        uint8_t i = 0;
-
-                        while (i < p_node->num_items_ && p_node->items_[i].first < key) {
-                            DLOG(INFO) << "key " << p_node->items_[i].first << " is less than " << key;
-                            i++;
-                        }
-
-                        p_node = p_node->nodes_[i];
-                    }
-
-                    return p_node;
-                }
-
-                /*
-                void insert_into_this_node(node* p_node, const std::pair<_TpKey, _TpValue>& item, node* p_right_node) {
-                    if (p_node->num_items_ < node::max_num_items) {
-                        DLOG(INFO) << "we have space in this node";
-                        p_node->insert(key, value, p_right_node);
-                    } else { // we need to split this one
-                        // selecting item to rise
-                        std::pair<_TpKey, _TpValue> item_to_rise = item;
-
-                        for (uint8_t idx = 0; idx < _order; idx++) {
-                            if (item_to_rise.first < p_node->items_[idx].first) {
-                                std::pair<_TpKey, _TpValue> tmp = item_to_rise;
-                                item_to_rise = p_node->items_[idx];
-                                p_node->items_[idx] = tmp;
-                            }
-                        }
-
-                        for (uint8_t idx = node::max_num_items-1; idx >= _order; idx--) {
-                            if (item_to_rise.first > p_node->items_[idx].first) {
-                                std::pair<_TpKey, _TpValue> tmp = item_to_rise;
-                                item_to_rise = p_node->items_[idx];
-                                p_node->items_[idx] = tmp;
-                            }
-                        }
-
-                        // creating new node to split
-                        node* p_new_right_node = new node();
-
-                        for (uint8_t idx = _order; idx < p_node->num_items_; idx++) {
-                            p_new_right_node->insert(p_node->items_[idx].first, p_node->items_[idx].second);
-                        }
-
-                        p_node->num_items_ = _order;
-
-                        if (root_ == p_node) { // if this is root, create new root and update with item to rise
-                            node* new_root = new node();
-                            new_root->insert(item_to_rise.first, item_to_rise.second);
-                            new_root->nodes_[0] = p_node;
-                            new_root->nodes_[1] = p_new_right_node;
-
-                            p_node->set_parent(new_root);
-                            p_new_right_node->set_parent(new_root);
-                            root_ = new_root;
-                        } else { // updating parent with item to rise
-                            node* p_parent = p_node->parent_;
-
-                            if (p_parent->num_items_ < node::max_num_items) {
-                                p_parent->insert(item_to_rise, p_new_right_node);
-                            } else { // we need to split this one to insert item_to_rise
-                            }
-                        }
-                    }
-                }
-                */
+                node* get_node_to_insert(const _TpKey& key) const;
+                void insert_into_this_node(node* p_node, const typename node::_TpItem& item, node* p_node_next_to_item);
 
             public:
                 iterator begin();
@@ -143,24 +73,76 @@ namespace cbt {
         };
 
     template<typename _TpKey, typename _TpValue, uint8_t _order>
+        btree_node<_TpKey, _TpValue, _order>* btree<_TpKey, _TpValue, _order>::get_node_to_insert(const _TpKey& key) const {
+            node* p_node = root_;
+
+            while (! p_node->is_leaf()) {
+                uint8_t i = 0;
+
+                while (i < p_node->num_items_ && p_node->items_[i].first < key) {
+                    i++;
+                }
+
+                p_node = p_node->nodes_[i];
+            }
+
+            return p_node;
+
+        }
+
+    template<typename _TpKey, typename _TpValue, uint8_t _order>
+        void btree<_TpKey, _TpValue, _order>::insert_into_this_node(node* p_node, const typename node::_TpItem& item, node* p_node_next_to_item) {
+            if (p_node->num_items_ < node::max_num_items) {
+                p_node->insert(item, p_node_next_to_item);
+            } else { // we need to split this one to insert item
+                typename node::_TpItem item_to_rise = item;
+                p_node->get_median_item_rnode(item_to_rise, p_node_next_to_item);
+
+                // creating new node to split
+                node* p_new_right_node = new node();
+
+                for (uint8_t idx = _order; idx < p_node->num_items_; idx++) {
+                    p_new_right_node->insert(p_node->items_[idx].first, p_node->items_[idx].second);
+                    p_new_right_node->nodes_[idx-_order+1] = p_node->nodes_[idx+1];
+                    p_node->nodes_[idx+1] = NULL;
+                }
+
+                p_node_next_to_item->parent_ = p_new_right_node;
+                p_new_right_node->nodes_[0] = p_node_next_to_item;
+                p_node->num_items_ = _order;
+
+                if (root_ == p_node) { // if this is root, create new root and update with item to rise
+                    node* new_root = new node();
+                    new_root->insert(item_to_rise.first, item_to_rise.second);
+                    new_root->nodes_[0] = p_node;
+                    new_root->nodes_[1] = p_new_right_node;
+
+                    p_node->set_parent(new_root);
+                    p_new_right_node->set_parent(new_root);
+                    root_ = new_root;
+                } else { // updating parent with item to rise
+                    node* p_parent = p_node->parent_;
+                    p_new_right_node->set_parent(p_parent);
+
+                    insert_into_this_node(p_parent, item_to_rise, p_new_right_node);
+                }
+            }
+        }
+
+    template<typename _TpKey, typename _TpValue, uint8_t _order>
         void btree<_TpKey, _TpValue, _order>::insert(const _TpKey& key,
                 const _TpValue& value) {
-            DLOG(INFO) << "inserting (" << key << ", " << value << ")";
-
             node* p_node = get_node_to_insert(key);
 
-            DLOG(INFO) << "now node is leaf";
-
             if (p_node->num_items_ < node::max_num_items) {
-                DLOG(INFO) << "we have space in this node";
                 p_node->insert(key, value);
             } else { // we need to split this one
                 // selecting item to rise
-                std::pair<_TpKey, _TpValue> item_to_rise = std::make_pair(key, value);
+                typename node::_TpItem item_to_rise = std::make_pair(key, value);
 
                 for (uint8_t idx = 0; idx < _order; idx++) {
                     if (item_to_rise.first < p_node->items_[idx].first) {
-                        std::pair<_TpKey, _TpValue> tmp = item_to_rise;
+                        typename node::_TpItem tmp = item_to_rise;
                         item_to_rise = p_node->items_[idx];
                         p_node->items_[idx] = tmp;
                     }
@@ -168,7 +150,7 @@ namespace cbt {
 
                 for (uint8_t idx = node::max_num_items-1; idx >= _order; idx--) {
                     if (item_to_rise.first > p_node->items_[idx].first) {
-                        std::pair<_TpKey, _TpValue> tmp = item_to_rise;
+                        typename node::_TpItem tmp = item_to_rise;
                         item_to_rise = p_node->items_[idx];
                         p_node->items_[idx] = tmp;
                     }
@@ -194,15 +176,11 @@ namespace cbt {
                     root_ = new_root;
                 } else { // updating parent with item to rise
                     node* p_parent = p_node->parent_;
+                    p_new_right_node->set_parent(p_parent);
 
-                    if (p_parent->num_items_ < node::max_num_items) {
-                        p_parent->insert(item_to_rise, p_new_right_node);
-                    } else { // we need to split this one to insert item_to_rise
-                    }
+                    insert_into_this_node(p_parent, item_to_rise, p_new_right_node);
                 }
             }
-
-            DLOG(INFO) << "insert done";
         }
 
     template<typename _TpKey, typename _TpValue, uint8_t _order>
@@ -210,16 +188,13 @@ namespace cbt {
                  _TpValue, _order>::begin() {
             if (!root_->empty()) {
                 node* p_node = root_;
-                std::stack<uint8_t> idx_stack;
 
                 while (p_node->nodes_[0]) {
-                    //DLOG(INFO) << "passing by key " << p_node->items_[0].first;
-                    idx_stack.push(0);
                     p_node = p_node->nodes_[0];
                 }
 
                 uint8_t idx = 0;
-                return iterator(p_node, idx, idx_stack);
+                return iterator(p_node, idx);
             } else {
                 return iterator();
             }
@@ -236,7 +211,7 @@ namespace cbt {
                 idx++;
 
             if (idx < p_node->num_items_ && p_node->items_[idx].first == key)
-                return iterator(p_node, idx, std::stack<uint8_t>());
+                return iterator(p_node, idx);
             else
                 return iterator();
         }

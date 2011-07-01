@@ -54,43 +54,41 @@ namespace cbt {
 
             public:
                 btree_iterator() : ptr_(NULL), idx_(0) { }
-                btree_iterator(node* ptr, uint8_t idx, std::stack<uint8_t>
-                        idx_stack) : ptr_(ptr), idx_(idx), idx_stack_(idx_stack) { }
+                btree_iterator(node* ptr, uint8_t idx) : ptr_(ptr), idx_(idx) { }
 
             private:
                 void _incr() {
                     DLOG(INFO) << "old key (idx_: " << int(idx_) << "): " << ptr_->items_[idx_].first;
                     if (idx_+1 < node::max_num_nodes && ptr_->nodes_[idx_+1]) {
                         DLOG(INFO) << "node found";
-                        idx_stack_.push(idx_+1);
+                        //idx_stack_.push(idx_+1);
                         ptr_ = ptr_->nodes_[idx_+1];
                         idx_ = 0;
 
                         while (ptr_->nodes_[0]) {
-                            idx_stack_.push(idx_);
+                            //idx_stack_.push(idx_);
                             ptr_ = ptr_->nodes_[0];
                         }
                     } else if (idx_+1 < ptr_->num_items_) {
                         idx_++;
-                    } else if (ptr_->parent_) {
+                    } else {
+                        DLOG(INFO) << "rising up";
+                        _TpKey k_old = ptr_->items_[idx_].first;
+
                         ptr_ = ptr_->parent_;
-                        idx_ = idx_stack_.top();
-                        idx_stack_.pop();
+                        idx_ = 0;
 
-                        while (ptr_ && idx_ >= ptr_->num_items_) {
-                            ptr_ = ptr_->parent_;
-
-                            if (ptr_) {
-                                idx_ = idx_stack_.top();
-                                idx_stack_.pop();
-                            } else {
+                        while (ptr_ && ptr_->items_[idx_].first < k_old) {
+                            while (idx_ < ptr_->num_items_ && ptr_->items_[idx_].first < k_old)
+                                idx_++;
+                            if(idx_ == ptr_->num_items_) {
+                                ptr_ = ptr_->parent_;
                                 idx_ = 0;
                             }
                         }
-                    } else {
-                        ptr_ = NULL;
-                        idx_ = 0;
                     }
+                    if(ptr_)
+                        DLOG(INFO) << "new key (idx_: " << int(idx_) << "): " << ptr_->items_[idx_].first;
                 }
 
             public:
@@ -124,7 +122,6 @@ namespace cbt {
             private:
                 btree_node<_TpKey, _TpValue, _order>* ptr_;
                 uint8_t idx_;
-                std::stack<uint8_t> idx_stack_;
         };
 }
 

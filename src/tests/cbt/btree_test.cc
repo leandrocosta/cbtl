@@ -168,6 +168,26 @@ class SevenItemsBTree : public ::testing::Test {
         cbt::btree<int, std::string>* p_btree_;
 };
 
+TEST_F(SevenItemsBTree, ShouldReturnLowerKeyAsFirstItem) {
+    EXPECT_EQ(1, p_btree_->begin()->first);
+}
+
+TEST_F(SevenItemsBTree, ShouldReturnSecondKeyAsSecondItem) {
+    EXPECT_EQ(2, (++(p_btree_->begin()))->first);
+}
+
+TEST_F(SevenItemsBTree, ShouldReturnThirdKeyAsThirdItem) {
+    EXPECT_EQ(3, (++(++(p_btree_->begin())))->first);
+}
+
+TEST_F(SevenItemsBTree, ShouldReturnFourthKeyAsFourthItem) {
+    EXPECT_EQ(4, (++(++(++(p_btree_->begin()))))->first);
+}
+
+TEST_F(SevenItemsBTree, ShouldReturnFifthKeyAsFifthItem) {
+    EXPECT_EQ(5, (++(++(++(++(p_btree_->begin())))))->first);
+}
+
 TEST_F(SevenItemsBTree, ShouldPermitIterateByItems) {
     cbt::btree<int, std::string>::iterator it = p_btree_->begin();
     EXPECT_EQ(1, it->first);

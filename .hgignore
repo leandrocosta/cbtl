@@ -20,3 +20,4 @@ config.h
 src/examples/example1
 src/tests/gtest/libgtest-x86.a
 src/tests/cbt/btree_test
+src/tags
