@@ -20,8 +20,8 @@
  */
 
 /*!
- * \file cgt/btree_iterator.h
- * \brief Contains btree_iterator definition.
+ * \file cgt/_BTreeIterator.h
+ * \brief Contains _BTreeIterator definition.
  * \author Leandro Costa
  * \date 2011
  */
@@ -38,32 +38,32 @@ namespace cbt {
     class _BTreeNode;
 
   /*! 
-   * \class btree_iterator
-   * \brief The btree_iterator class template.
+   * \class _BTreeIterator
+   * \brief The _BTreeIterator class template.
    * \author Leandro Costa
    * \date 2011
    *
-   * A btree_iterator that points to a tree_node and returns std::pair<_TpKey, _TpValue>.
+   * A _BTreeIterator that points to a tree_node and returns std::pair<_TpKey, _TpValue>.
    */
 
   template<typename _TpKey, typename _TpValue, uint8_t _order>
-    class btree_iterator {
+    class _BTreeIterator {
       private:
         typedef _BTreeNode<_TpKey, _TpValue, _order> _Node;
 
       public:
-        btree_iterator() : ptr_(NULL), idx_(0) { }
-        btree_iterator(_Node* ptr, uint8_t idx = 0) : ptr_(ptr), idx_(idx) { }
+        _BTreeIterator() : ptr_(NULL), idx_(0) { }
+        _BTreeIterator(_Node* ptr, uint8_t idx = 0) : ptr_(ptr), idx_(idx) { }
 
       private:
         void _incr();
 
       public:
-        const bool operator==(const btree_iterator& other) const {
+        const bool operator==(const _BTreeIterator& other) const {
           return (ptr_ == other.ptr_ && idx_ == other.idx_);
         }
 
-        const bool operator!=(const btree_iterator& other) const {
+        const bool operator!=(const _BTreeIterator& other) const {
           return !operator==(other);
         }
 
@@ -75,13 +75,13 @@ namespace cbt {
           return &(operator*());
         }
 
-        btree_iterator& operator++() {
+        _BTreeIterator& operator++() {
           _incr();
           return *this;
         }
 
-        const btree_iterator operator++(int i) {
-          btree_iterator it = *this;
+        const _BTreeIterator operator++(int i) {
+          _BTreeIterator it = *this;
           _incr();
           return it;
         }
@@ -92,7 +92,7 @@ namespace cbt {
     };
 
   template<typename _TpKey, typename _TpValue, uint8_t _order>
-    void btree_iterator<_TpKey, _TpValue, _order>::_incr() {
+    void _BTreeIterator<_TpKey, _TpValue, _order>::_incr() {
       if (idx_+1 < _Node::MAX_NUM_NODES && ptr_->node(idx_+1)) {
         ptr_ = ptr_->node(idx_+1);
         idx_ = 0;

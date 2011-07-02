@@ -20,8 +20,8 @@
  */
 
 /*!
- * \file cgt/btree.h
- * \brief Contains btree definition. The only file that needs to be included in source code.
+ * \file cgt/btree_node.h
+ * \brief Contains _BTreeNode definition. The only file that needs to be included in source code.
  * \author Leandro Costa
  * \date 2011
  */
@@ -36,12 +36,6 @@
 #include "glog/logging.h"
 
 namespace cbt {
-  template<typename _TpKey, typename _TpValue, uint8_t _order>
-    class btree;
-
-  template<typename _TpKey, typename _TpValue, uint8_t _order>
-    class btree_iterator;
-
   template<typename _TpKey, typename _TpValue, uint8_t _order>
     class _BTreeNode {
       public:
@@ -131,7 +125,6 @@ namespace cbt {
             }
           }
         }
-
 
         const bool empty() const { return (num_items_ == 0); }
 

@@ -51,7 +51,7 @@ namespace cbt {
         typedef _BTreeNode<_TpKey, _TpValue, _order> _Node;
 
       public:
-        typedef btree_iterator<_TpKey, _TpValue, _order> iterator;
+        typedef _BTreeIterator<_TpKey, _TpValue, _order> iterator;
 
       public:
         btree() : root_(new _Node()) { }
