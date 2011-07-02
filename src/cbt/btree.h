@@ -57,7 +57,7 @@ namespace cbt {
         btree() : root_(new _Node()) { }
 
       private:
-        _Node* _get_node_to_insert(const _TpKey& key) const;
+        _Node* _get_node_of_key(const _TpKey& key) const;
         void _insert_into_this_node(_Node* p_node,
             const typename _Node::_TpItem& item,
             _Node* p_node_next_to_item);
@@ -77,7 +77,7 @@ namespace cbt {
         }
         iterator end() { return iterator(); }
         iterator find(const _TpKey& key) {
-          _Node* p_node = root_;
+          _Node* p_node = _get_node_of_key(key);
 
           uint8_t idx = 0;
 
@@ -99,7 +99,7 @@ namespace cbt {
 
   template<typename _TpKey, typename _TpValue, uint8_t _order>
     _BTreeNode<_TpKey, _TpValue, _order>* btree<_TpKey,
-    _TpValue, _order>::_get_node_to_insert(const _TpKey& key) const {
+    _TpValue, _order>::_get_node_of_key(const _TpKey& key) const {
       _Node* p_node = root_;
 
       while (!p_node->is_leaf()) {
@@ -149,7 +149,7 @@ namespace cbt {
   template<typename _TpKey, typename _TpValue, uint8_t _order>
     void btree<_TpKey, _TpValue, _order>::insert(const _TpKey& key,
         const _TpValue& value) {
-      _insert_into_this_node(_get_node_to_insert(key),
+      _insert_into_this_node(_get_node_of_key(key),
           std::make_pair(key, value), NULL);
     }
 }

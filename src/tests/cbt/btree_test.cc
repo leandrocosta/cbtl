@@ -221,6 +221,9 @@ TEST_F(SevenItemsBTree, ShouldPermitIterateByItems) {
     EXPECT_EQ(p_btree_->end(), it);
 }
 
+TEST_F(SevenItemsBTree, ShouldReturnCorrectNodeWithFind) {
+  EXPECT_EQ(5, p_btree_->find(5)->first);
+}
 
 int main(int argc, char* argv[]) {
     ::google::InitGoogleLogging(argv[0]);

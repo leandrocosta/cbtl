@@ -6,14 +6,15 @@
 int main() {
     cbt::btree<int, std::string> b;
 
-    b.insert(1, "B");
-    b.insert(2, "A");
-    /*
-    const std::string& ret = b.find(1);
+    b.insert(1, "E");
+    b.insert(2, "D");
+    b.insert(3, "C");
+    b.insert(4, "B");
+    b.insert(5, "A");
 
-    std::cout << "1: " << ret << std::endl;
-    std::cout << "2: " << b.find(2) << std::endl;
-    */
+    cbt::btree<int, std::string>::iterator it = b.find(3);
+
+    std::cout << "key: " << it->first << ", value: " << it->second << std::endl;
 
     return 0;
 }
